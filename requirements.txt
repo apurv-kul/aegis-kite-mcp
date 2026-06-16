@@ -1,0 +1,5 @@
+python-dotenv==1.2.2
+pyotp==2.10.0
+kiteconnect==5.2.0
+mcp-server==0.1.4
+playwright==1.60.0
