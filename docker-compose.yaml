@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # --- EVENT BUS & HOT CACHE ---
+  redis:
+    image: redis:7.2-alpine
+    container_name: aegis_redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy noeviction
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aegis_network
+
+  # --- HISTORICAL DATA LAYER ---
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    container_name: aegis_timescaledb
+    environment:
+      POSTGRES_USER: aegis_admin
+      POSTGRES_PASSWORD: local_secure_password_123
+      POSTGRES_DB: aegis_market_data
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aegis_network
+
+  # --- LOCAL SECRET MANAGEMENT ---
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: aegis_vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root_token_local"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - aegis_network
+
+  # --- GRAPH DATABASE (Market Structure) ---
+  neo4j:
+    image: neo4j:5.18.0
+    container_name: aegis_neo4j
+    environment:
+      NEO4J_AUTH: neo4j/aegis_secure_graph_123
+      NEO4J_PLUGINS: '["apoc"]' # APOC utility library is crucial for complex graph queries
+    ports:
+      - "7474:7474" # HTTP Browser
+      - "7687:7687" # Bolt Protocol (Python connection)
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - aegis_network
+
+networks:
+  aegis_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:
+  neo4j_data:

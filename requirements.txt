@@ -3,3 +3,22 @@ pyotp==2.10.0
 kiteconnect==5.2.0
 mcp-server==0.1.4
 playwright==1.60.0
+
+# Project Aegis — market_data_pipeline.py dependencies
+# Pin to minor versions; allow patch updates for security fixes.
+
+# Redis client — both sync (Publisher) and async (Consumer) interfaces
+redis[hiredis]>=5.0,<6.0        # hiredis extra: C-extension parser, ~3x faster for bulk reads
+
+# Pydantic v2 — strict validation, model_dump_json, model_validate_json
+pydantic>=2.7,<3.0
+
+# ── Optional but recommended in production ──────────────────────────────────
+# python-dotenv  (read Redis credentials from .env — consistent with kite_mcp.py)
+python-dotenv>=1.0,<2.0
+
+neo4j 
+
+qdrant-client
+
+psycopg2-binary
