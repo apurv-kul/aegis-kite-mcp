@@ -53,13 +53,19 @@ log = logging.getLogger("aegis.kite_mcp")
 # ─────────────────────────────────────────────
 @asynccontextmanager
 async def _lifespan(server: FastMCP):
-    try:
-        result = await bootstrap_kite_session()
+    log.info("MCP server starting — initiating Kite Connect session …")
+    result = await bootstrap_kite_session()
+    if result["status"] == "ok":
         log.info("Startup login succeeded. Server ready.")
-    except Exception as exc:
-        log.error("Startup login FAILED: %s — call refresh_session to retry.", exc)
+    else:
+        log.error(
+            "Startup login FAILED (stage=%s). Call the 'refresh_session' tool to retry. Error: %s",
+            result.get("stage"),
+            result.get("error"),
+        )
     yield
     log.info("MCP server shutting down.")
+
 
 
 mcp = FastMCP(
