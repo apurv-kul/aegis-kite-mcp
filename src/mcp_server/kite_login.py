@@ -117,26 +117,24 @@ async def get_request_token(
                     if tokens:
                         redirect_future.set_result(tokens[0])
                         break
+                if redirect_future.done():
+                    break
+                
                 await asyncio.sleep(0.5)
             
-            try:
-                request_token = await asyncio.wait_for(
-                    asyncio.shield(redirect_future),
-                    timeout=2.0,
-                )
-            except asyncio.TimeoutError:
-                # Take a screenshot for debugging
+            if not redirect_future.done():
                 try:
                     await page.screenshot(path="login_debug.png")
-                    log.warning("Screenshot saved to login_debug.png for debugging")
-                    log.warning("Current page URL: %s", page.url)
+                    log.warning("Screenshot saved to login_debug.png for debugging. URL: %s", page.url)
                 except Exception as sc_err:
                     log.warning("Could not save screenshot: %s", sc_err)
+                    
                 raise RuntimeError(
-                    "Timed out waiting for the post-login redirect. "
-                    "Current URL: %s. Check Kite app redirect URL config and ensure it matches your broker settings." % page.url
+                    f"Timed out after {REDIRECT_TIMEOUT_MS/1000}s waiting for the post-login redirect. "
+                    f"Current URL: {page.url}. Check Kite app redirect URL config."
                 )
-            return request_token
+                
+            return redirect_future.result()
 
         finally:
             await context.close()
